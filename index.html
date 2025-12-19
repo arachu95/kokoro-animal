@@ -5,22 +5,134 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>こころのどうぶつ｜チーム診断（β）</title>
 <style>
-body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;margin:24px;line-height:1.6}
-.card{max-width:760px;margin:0 auto;padding:18px;border:1px solid #ddd;border-radius:14px}
-button{padding:10px 14px;border-radius:10px;border:1px solid #ccc;background:#fff;cursor:pointer;margin:6px 6px 0 0}
-button:hover{background:#f6f6f6}
-button:disabled{opacity:.45;cursor:not-allowed}
-.muted{color:#666;font-size:14px}
-.hr{height:1px;background:#eee;margin:16px 0}
-.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px}
-.pill{display:inline-flex;align-items:center;gap:8px;border:1px solid #eee;border-radius:999px;padding:8px 10px;background:#fafafa}
-.count{min-width:2ch;text-align:center;font-weight:700}
-.big{font-size:22px;font-weight:800;margin:8px 0}
-.kpi{display:grid;grid-template-columns:1fr;gap:10px}
-@media (min-width:720px){ .kpi{grid-template-columns:1fr 1fr} }
-.box{border:1px solid #eee;border-radius:12px;padding:12px;background:#fff}
+:root{
+--bd:#e9e9e9;
+--bd2:#d9d9d9;
+--bg:#ffffff;
+--soft:#fafafa;
+--muted:#6b6b6b;
+}
+body{
+font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+margin: 20px;
+line-height: 1.65;
+background: #fff;
+}
+.card{
+max-width: 780px;
+margin: 0 auto;
+padding: 18px;
+border: 1px solid var(--bd);
+border-radius: 16px;
+background: var(--bg);
+}
+h1{ margin: 0 0 6px 0; font-size: 22px; }
+.muted{ color: var(--muted); font-size: 14px; }
+.hr{ height:1px; background: var(--bd); margin: 16px 0; }
+
+/* 入力エリア */
+.box{
+border: 1px solid var(--bd);
+border-radius: 14px;
+padding: 12px;
+background: #fff;
+}
+
+/* 1行(1動物)をモバイルでも崩れないgridに */
+.row{
+display: grid;
+grid-template-columns: 1fr 44px 36px 44px;
+gap: 10px;
+align-items: center;
+margin-top: 10px;
+}
+.pill{
+display: flex;
+align-items: center;
+gap: 10px;
+border: 1px solid var(--bd);
+border-radius: 999px;
+padding: 10px 12px;
+background: var(--soft);
+min-width: 0;
+}
+.pill b{ white-space: nowrap; }
+.pill .short{ white-space: nowrap; }
+.emoji{ font-size: 18px; }
+
+.count{
+text-align: center;
+font-weight: 800;
+font-size: 18px;
+}
+
+button{
+padding: 10px 12px;
+border-radius: 12px;
+border: 1px solid var(--bd2);
+background: #fff;
+cursor: pointer;
+font-weight: 700;
+}
+button:hover{ background:#f5f5f5; }
+button:disabled{ opacity:.45; cursor:not-allowed; }
+
+.actions{
+display:flex;
+gap:10px;
+flex-wrap: wrap;
+margin-top: 12px;
+}
+
+/* 結果 */
+.big{
+font-size: 22px;
+font-weight: 900;
+margin: 8px 0;
+}
+.kpi{
+display:grid;
+grid-template-columns: 1fr;
+gap: 10px;
+}
+@media (min-width: 740px){
+.kpi{ grid-template-columns: 1fr 1fr; }
+}
+
+/* フォーメーション選択 */
+.leaderBox{
+margin-top: 14px;
+padding: 12px;
+border: 1px dashed var(--bd2);
+border-radius: 14px;
+background: #fff;
+}
+.leaderGrid{
+display:grid;
+grid-template-columns: 1fr;
+gap: 8px;
+margin-top: 8px;
+}
+@media (min-width: 740px){
+.leaderGrid{ grid-template-columns: 1fr 1fr; }
+}
+label.leadOpt{
+display:flex;
+align-items:center;
+gap:10px;
+border:1px solid var(--bd);
+border-radius: 12px;
+padding:10px 12px;
+background: var(--soft);
+cursor:pointer;
+user-select:none;
+}
+input[type="radio"]{ transform: scale(1.1); }
+
+.preline{ white-space: pre-line; }
 </style>
 </head>
+
 <body>
 <div class="card">
 <h1>こころのどうぶつ｜チーム診断 🧩</h1>
@@ -29,7 +141,7 @@ button:disabled{opacity:.45;cursor:not-allowed}
 <div id="app"></div>
 
 <p class="muted" style="margin-top:16px">
-※人を固定する診断ではありません。<b>「このチームの“場”の傾向」</b>を見ます。
+※人を固定する診断ではありません。<b>「このチームの“場”の傾向」</b>をやさしく見ます。
 </p>
 </div>
 
@@ -47,25 +159,25 @@ const ANIMALS = [
 
 // 逆ベクトル（回復の一手）
 const RECOVERY_MAP = {
-owl: {key:"cat", text:"🦉（観測）が強いときは、🐱（流動）を一時的に足すと場が動きやすい"},
+owl: {key:"cat", text:"🦉（観測）が強いときは、🐱（流動）を少し足すと場が動きやすい"},
 squirrel: {key:"rabbit", text:"🐿️（設計）が強いときは、🐰（調律）で圧を抜くと燃えにくい"},
 dog: {key:"owl", text:"🐶（共鳴）が強いときは、🦉（観測）で距離と整理を入れると決まりやすい"},
-cat: {key:"squirrel",text:"🐱（流動）が強いときは、🐿️（設計）で形に落とすと定着する"},
-rabbit: {key:"dog", text:"🐰（調律）が強いときは、🐶（共鳴）で温度を上げると停滞しにくい"},
+cat: {key:"squirrel", text:"🐱（流動）が強いときは、🐿️（設計）で形に落とすと定着しやすい"},
+rabbit: {key:"dog", text:"🐰（調律）が強いときは、🐶（共鳴）で温度を少し上げると停滞しにくい"},
 };
 
-// 「穴」解説（足りないと起きがち）
+// 穴（足りないと起きがち）
 const HOLE_HINT = {
-owl: "🦉が足りないと、全体像が掴めず『何を優先する？』が曖昧になりやすい。",
-dog: "🐶が足りないと、空気が硬くなり『言いにくいこと』が増えやすい。",
-squirrel: "🐿️が足りないと、決まっても形にならず『結局進まない』が起きやすい。",
-cat: "🐱が足りないと、発想の切り替えが起きにくく『正しいけど動かない』になりやすい。",
-rabbit: "🐰が足りないと、摩擦や疲労が抜けにくく『なんかしんどい』が残りやすい。",
+owl: "🦉が少ないと、全体像がつかみにくくて「何を優先する？」がふわっとしやすい。",
+dog: "🐶が少ないと、空気が少し固まりやすくて「言いにくいこと」が増えがち。",
+squirrel: "🐿️が少ないと、決まっても形にならず「結局進まない」が起きやすい。",
+cat: "🐱が少ないと、切り替えが起きにくくて「正しいけど動かない」になりやすい。",
+rabbit: "🐰が少ないと、摩擦が抜けにくくて「なんかしんどい」が残りやすい。",
 };
 
-// 「重心」解説（チームの雰囲気）
+// 重心（雰囲気）
 const CENTER_HINT = {
-owl: "🦉重心：よく観察し、深く考えるチーム。強みは理解と洞察。弱みは考えすぎで停止しやすい。",
+owl: "🦉重心：よく観察し、深く考えるチーム。強みは理解と洞察。弱みは考えすぎて止まりやすい。",
 dog: "🐶重心：関係性と温度が強いチーム。強みは安心と協力。弱みは決断が先送りになりやすい。",
 squirrel: "🐿️重心：現実に落として進めるチーム。強みは実行と安定。弱みは負担が集中し燃えやすい。",
 cat: "🐱重心：変化とアイデアが出るチーム。強みは突破力。弱みは定着せず散りやすい。",
@@ -74,20 +186,39 @@ rabbit: "🐰重心：摩擦を減らし整えるチーム。強みは回復と�
 
 /** ========= 状態 ========= */
 let counts = {owl:0,dog:0,squirrel:0,cat:0,rabbit:0};
+// フォーメーション（頭/上司役）は「ユーザーが選ぶ」＝ここが重要
+let leaderKey = "auto"; // auto / owl / dog / squirrel / cat / rabbit
 
-/** ========= UI ========= */
+/** ========= ヘルパ ========= */
 const app = document.getElementById("app");
 
 function totalN(){
 return Object.values(counts).reduce((a,b)=>a+b,0);
 }
-
 function clampNonNeg(){
 for(const a of ANIMALS){
 if(counts[a.key] < 0) counts[a.key] = 0;
 }
 }
+function animalByKey(key){
+return ANIMALS.find(a => a.key === key);
+}
+function animalLabel(key){
+const a = animalByKey(key);
+return a ? `${a.emoji}${a.name}` : key;
+}
 
+// 1:1:1:1:1 判定（5種がすべて同数で入っている）
+function isPerfectBalance(counts){
+const vals = Object.values(counts);
+const n = vals.reduce((a,b)=>a+b,0);
+if(n === 0) return false;
+const nonZero = vals.filter(v => v > 0);
+if(nonZero.length !== ANIMALS.length) return false;
+return nonZero.every(v => v === nonZero[0]);
+}
+
+/** ========= UI ========= */
 function render(){
 const n = totalN();
 const full = n >= MAX_N;
@@ -98,9 +229,9 @@ const canSub = counts[a.key] > 0;
 return `
 <div class="row">
 <div class="pill">
-<span style="font-size:18px">${a.emoji}</span>
+<span class="emoji">${a.emoji}</span>
 <b>${a.name}</b>
-<span class="muted">(${a.short})</span>
+<span class="muted short">(${a.short})</span>
 </div>
 <button ${canSub ? "" : "disabled"} onclick="sub('${a.key}')">−</button>
 <div class="count">${counts[a.key]}</div>
@@ -109,13 +240,39 @@ return `
 `;
 }).join("");
 
+// フォーメーション選択（auto + 5種）
+const leaderOptions = [
+{key:"auto", label:"🧭 自動（未指定）"},
+...ANIMALS.map(a => ({key:a.key, label:`${a.emoji} ${a.name} を“頭/上司役”として扱う`}))
+].map(opt => {
+const checked = (leaderKey === opt.key) ? "checked" : "";
+return `
+<label class="leadOpt">
+<input type="radio" name="leader" value="${opt.key}" ${checked}
+onchange="setLeader('${opt.key}')">
+<span>${opt.label}</span>
+</label>
+`;
+}).join("");
+
 app.innerHTML = `
 <div class="box">
 <div class="muted">人数入力（最大 ${MAX_N} 人）</div>
 ${rows}
+
+<div class="leaderBox">
+<b>🧭 フォーメーション（頭/上司役）</b>
+<div class="muted" style="margin-top:6px">
+ここは「誰が上司か／誰の判断が基準になるか」を決める場所。<br>
+※<b>人数の多さで自動決定しません</b>（あなたの③を修正）。
+</div>
+<div class="leaderGrid">${leaderOptions}</div>
+</div>
+
 <div class="hr"></div>
 <div><b>合計：</b>${n} / ${MAX_N} 人</div>
-<div style="margin-top:10px">
+
+<div class="actions">
 <button onclick="diagnose()" ${n>0 ? "" : "disabled"}>🧠 診断する</button>
 <button onclick="resetAll()">🔁 リセット</button>
 </div>
@@ -126,63 +283,99 @@ ${rows}
 `;
 }
 
+function setLeader(k){
+leaderKey = k;
+}
+
 function add(k){
 if(totalN() >= MAX_N) return;
 counts[k] += 1;
 render();
 }
-
 function sub(k){
 counts[k] -= 1;
 clampNonNeg();
 render();
 }
-
 function resetAll(){
 counts = {owl:0,dog:0,squirrel:0,cat:0,rabbit:0};
-render();
+leaderKey = "auto";
+// 数値は出さない（やさしく）
+if(b < 0.12) return {tag:"安定", desc:"かなりバランスが良い状態。長く走りやすい。"};
+if(b < 0.22) return {tag:"やや偏り", desc:"役割に少し寄りがある。穴をちょい足しすると整いやすい。"};
+return {tag:"偏り強め", desc:"特定の役割に集中しやすい。燃え・停滞のサインが出やすいのでケアすると安心。"};
 }
 
-/** ========= 診断ロジック ========= */
-function argMax(obj){
-let bestK=null, bestV=-Infinity;
-for(const [k,v] of Object.entries(obj)){
-if(v > bestV){ bestV=v; bestK=k; }
-}
-return bestK;
-}
-function argMin(obj){
-let bestK=null, bestV=Infinity;
-for(const [k,v] of Object.entries(obj)){
-if(v < bestV){ bestV=v; bestK=k; }
-}
-return bestK;
-}
-function normalizeCounts(){
-const n = totalN();
-if(n === 0) return null;
-const R = {};
-for(const a of ANIMALS){
-R[a.key] = counts[a.key] / n;
-}
-return R;
+// フォーメーション：頭/上司役（ユーザー指定が最優先）
+function detectFormation(counts){
+const keys = Object.keys(counts).filter(k => counts[k] > 0);
+
+// 未入力や0人の時は保険
+if(keys.length === 0){
+return { name:"🧭 未設定", desc:"人数が入っていないので、フォーメーションは未設定です。" };
 }
 
-// Bias = ||R - u|| (u = (0.2,...))
-function biasScore(R){
-const u = 0.2;
-let s = 0;
-for(const a of ANIMALS){
-const d = (R[a.key] - u);
-s += d*d;
+// ユーザーが明示した場合（これが本命）
+if(leaderKey !== "auto"){
+const a = animalByKey(leaderKey);
+if(!a) return { name:"🧭 未設定", desc:"選択が不正です（キーが見つかりません）。" };
+
+// “頭役”ごとの説明（やさしい）
+const map = {
+dog: { name:`${a.emoji}ワントップ（共鳴が頭）`, desc:"空気づくりと安心が判断の軸。みんなが話しやすい反面、決断は少し遅くなりがち。" },
+owl: { name:`${a.emoji}司令塔（観測が頭）`, desc:"状況整理と判断が軸。静かに進むけど、決める時はスパッと決まるタイプ。" },
+squirrel: { name:`${a.emoji}設計主導（設計が頭）`, desc:"段取りと形づくりが軸。進みやすいけど、負担が集中しやすいので分担が大事。" },
+cat: { name:`${a.emoji}突破主導（流動が頭）`, desc:"変化とアイデアが軸。突破力は強いけど、着地の役を一人つけると安定する。" },
+rabbit: { name:`${a.emoji}調律主導（調律が頭）`, desc:"摩擦を減らすことが軸。優しく回るけど、目的と期限を軽く置くと停滞しにくい。" },
+};
+return map[leaderKey] || { name:`${a.emoji}主導`, desc:"指定された役割が判断の軸になります。" };
 }
-return Math.sqrt(s);
+
+// auto（未指定）の場合だけ、軽く“目安”として出す（ただし責めない）
+const entries = Object.entries(counts);
+const max = Math.max(...entries.map(([k,v]) => v));
+const top = entries.filter(([k,v]) => v === max).map(([k]) => k);
+
+if(top.length >= 2){
+return { name:"🧩混成型（自動）", desc:"トップが同点。頭役が固定されず、状況でリーダー視点が入れ替わりやすい。" };
 }
-function biasLabel(b){
-// ざっくりラベル（数値は出さない）
-if(b < 0.12) return {tag:"安定", desc:"かなりバランスが良い。燃えにくく持続しやすい。"};
-if(b < 0.22) return {tag:"やや偏り", desc:"役割に寄りがある。穴を少し足すと整いやすい。"};
-return {tag:"偏り強め", desc:"特定の役割に集中しやすい。燃え・停滞の予兆が出やすい。"};
+const a = animalByKey(top[0]);
+return { name:`🧭自動：${a.emoji}${a.name}主導`, desc:"未指定なので、人数の多い役割を“目安”として表示しています（必要なら上で手動指定してね）。" };
+}
+
+// やさしい文章まとめ（④対応 + ②の1:1:1:1:1救済）
+function makeGentleText({ center, formation, hole, rec, counts }){
+const perfect = isPerfectBalance(counts);
+
+const centerA = animalLabel(center);
+const holeA = animalLabel(hole);
+const recA = animalLabel(rec.key);
+
+const centerText = perfect
+? `いまのチームは、5つの役割がきれいに揃っています。
+「どれが良い／悪い」ではなく、状況に合わせて自然に役割が回る、とても安定した状態です。`
+: `いまのチームは「${centerA}」の要素が少し強めに出ています。
+それは欠点ではなく、この場が“そうなりやすい”というだけ。
+うまく噛み合うと進みやすい一方、無理をすると疲れが出やすいのでケアすると安心です。`;
+
+const formationText =
+`フォーメーションは「誰が上司か／誰の判断が基準になりやすいか」を表します。
+今回は「${formation.name}」として出ています。
+（人数の多さで決めていないので、違和感があれば上で手動指定してOK）`;
+
+const holeText = perfect
+? `今は大きな「穴」は見えにくいです。
+もし詰まったら、司会交代や時間区切りなど、軽い循環を入れるだけで十分なことが多いです。`
+: `今は「${holeA}」の役割が少なめです。
+これは“ダメ”ではなく、今回あまり使われていない能力というだけ。
+少し補うと、場がふっと楽になることがあります。`;
+
+const recoveryText = perfect
+? `バランスはかなり良いです。変えるなら“やり方”を少しだけ（話す順番、時間、司会など）でOK。`
+: `行き詰まりを感じたら「${recA}」の動きを一時的に足すのがおすすめです。
+大きく変えなくても、ちょっとした工夫で十分です。`;
+
+return { perfect, centerText, formationText, holeText, recoveryText };
 }
 
 function diagnose(){
@@ -192,6 +385,7 @@ if(n === 0){
 result.innerHTML = "";
 return;
 }
+
 const R = normalizeCounts();
 
 const center = argMax(R);
@@ -200,50 +394,28 @@ const crowd = center; // 最大成分＝過密（簡易）
 const b = biasScore(R);
 const bl = biasLabel(b);
 
-// 一言で「場」を言う
-const centerText = CENTER_HINT[center];
-
-// 穴の説明
-const holeText = HOLE_HINT[hole];
-
-// 回復の一手（過密→逆ベクトル）
+const centerTextRaw = CENTER_HINT[center]; // 元の短い説明（残す）
+const holeTextRaw = HOLE_HINT[hole];
 const rec = RECOVERY_MAP[crowd];
 
-function detectFormation(counts){
-const entries = Object.entries(counts);
-const max = Math.max(...entries.map(([k,v]) => v));
-const top = entries.filter(([k,v]) => v === max).map(([k]) => k);
-
-if(top.length >= 2){
-return { name:"🧩混成型", desc:"トップが同点。指揮が分散しやすく、状況で形が変わるタイプ。" };
-}
-
-const leader = top[0];
-
-switch(leader){
-case "dog":
-return { name:"🐶ワントップ型", desc:"共感が前に立つ。安心感は強いが、判断が遅れやすい。" };
-case "owl":
-return { name:"🦉司令塔型", desc:"観測と判断が集中。静かだが決断は鋭い。" };
-case "squirrel":
-return { name:"🐿️中盤制圧型", desc:"設計が全体を支配。安定するが負担集中に注意。" };
-case "cat":
-return { name:"🐱流動突破型", desc:"自由に動く。突破力はあるが散りやすい。" };
-case "rabbit":
-return { name:"🐰調律循環型", desc:"空気を整え続ける。優しいが停滞しやすい。" };
-default:
-return { name:"🧩混成型", desc:"役割が分散している。状況に応じて形が変わりやすい。" };
-}
-}
-
+// フォーメーション（頭/上司役）
 const formation = detectFormation(counts);
-  
+
 // “足すならこれ”の提案（穴 or 逆ベクトル）
-const addKey = (R[hole] === 0) ? hole : rec.key; // 穴がゼロなら穴優先、そうでなければ回復優先
+const addKey = (R[hole] === 0) ? hole : rec.key;
 const addAnimal = ANIMALS.find(x=>x.key===addKey);
 
+// 1:1:1:1:1 を含む「やさしい文章」
+const gentle = makeGentleText({ center, formation, hole, rec, counts });
+
+// ②：完璧バランスならBiasを“安定固定”扱いにする（悪者を作らない）
+const biasTag = gentle.perfect ? "安定" : bl.tag;
+const biasDesc = gentle.perfect
+? "役割バランスがとても良い状態。今は無理に調整せず、自然な回転を活かすのが良さそう。"
+: bl.desc;
+
 // シェア文
-const share = `チーム診断：重心は${ANIMALS.find(x=>x.key===center).emoji}${ANIMALS.find(x=>x.key===center).name}、穴は${ANIMALS.find(x=>x.key===hole).emoji}${ANIMALS.find(x=>x.key===hole).name}。#こころのどうぶつ診断`;
+const share = `チーム診断：重心は${animalByKey(center).emoji}${animalByKey(center).name}／穴は${animalByKey(hole).emoji}${animalByKey(hole).name}。#こころのどうぶつ診断`;
 
 result.innerHTML = `
 <div class="hr"></div>
@@ -252,40 +424,45 @@ result.innerHTML = `
 
 <div class="kpi">
 <div class="box">
-<b>🧠 重心（Center）</b>
-<div style="margin-top:8px">${centerText}</div>
+<b>🧠 重心（いまの雰囲気）</b>
+<div class="muted" style="margin-top:6px">${centerTextRaw}</div>
+<div class="preline" style="margin-top:10px">${gentle.centerText}</div>
 </div>
 
 <div class="box">
-<b>⚠️ 偏り（Bias）：${bl.tag}</b>
-<div style="margin-top:8px">${bl.desc}</div>
+<b>⚖️ バランス：${biasTag}</b>
+<div style="margin-top:8px">${biasDesc}</div>
 </div>
 
 <div class="box">
-<b>🧭 フォーメーション</b>
+<b>🧭 フォーメーション（頭/上司役）</b>
 <div style="margin-top:8px"><b>${formation.name}</b><br>${formation.desc}</div>
+<div class="muted preline" style="margin-top:8px">${gentle.formationText}</div>
 </div>
 
 <div class="box">
-<b>🕳 穴（Hole）</b>
-<div style="margin-top:8px">${holeText}</div>
+<b>🕳 少なめの役割（穴）</b>
+<div class="muted" style="margin-top:6px">${holeTextRaw}</div>
+<div class="preline" style="margin-top:10px">${gentle.holeText}</div>
 </div>
 
 <div class="box">
-<b>🔥 負担が集中しやすい場所</b>
-<div style="margin-top:8px">今いちばん強いのは <b>${ANIMALS.find(x=>x.key===crowd).emoji}${ANIMALS.find(x=>x.key===crowd).name}</b>。<br>
-ここが頑張りすぎて燃えやすい（または停止しやすい）ポイント。</div>
+<b>🔥 いま負担が集中しやすい場所</b>
+<div style="margin-top:8px">
+今いちばん強いのは <b>${animalByKey(crowd).emoji}${animalByKey(crowd).name}</b>。<br>
+ここが頑張りすぎると、燃えたり止まったりしやすいポイント。
 </div>
 </div>
-
-<div class="hr"></div>
 
 <div class="box">
 <b>🌿 回復の一手</b>
 <div style="margin-top:8px">${rec.text}</div>
+<div class="muted preline" style="margin-top:8px">${gentle.recoveryText}</div>
+
 <div style="margin-top:10px">
 <b>✅ いま足すなら：</b> ${addAnimal.emoji}${addAnimal.name}
-<div class="muted">（他チームから“役割だけ”30分借りる、雑談枠を入れる、司会を変える…などでOK）</div>
+<div class="muted">（役割だけ30分借りる／司会交代／雑談枠を入れる…などでOK）</div>
+</div>
 </div>
 </div>
 
